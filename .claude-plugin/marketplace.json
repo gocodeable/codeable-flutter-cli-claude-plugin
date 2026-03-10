@@ -1,7 +1,11 @@
 {
+  "name": "codeable",
+  "owner": {
+    "name": "gocodeable",
+    "url": "https://github.com/gocodeable"
+  },
   "plugins": [
     {
-      "id": "codeable",
       "name": "codeable",
       "description": "AI-powered companion for codeable_cli — skills, commands, and agents for Flutter Clean Architecture projects. Feature scaffolding, API wiring, localization, dead code cleanup, release builds, and more.",
       "version": "1.0.0",
