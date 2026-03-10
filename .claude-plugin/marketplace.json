@@ -7,7 +7,7 @@
       "version": "1.0.0",
       "source": {
         "type": "git",
-        "url": "https://github.com/codeable/codeable-claude-plugin"
+        "url": "https://github.com/gocodeable/codeable-claude-plugin"
       }
     }
   ]

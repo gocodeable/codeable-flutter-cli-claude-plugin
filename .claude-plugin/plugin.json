@@ -6,8 +6,8 @@
     "name": "Codeable",
     "url": "https://gocodeable.com"
   },
-  "homepage": "https://github.com/codeable/codeable-claude-plugin",
-  "repository": "https://github.com/codeable/codeable-claude-plugin",
+  "homepage": "https://github.com/gocodeable/codeable-claude-plugin",
+  "repository": "https://github.com/gocodeable/codeable-claude-plugin",
   "license": "MIT",
   "keywords": [
     "flutter",

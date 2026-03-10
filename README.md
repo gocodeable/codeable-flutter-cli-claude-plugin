@@ -8,7 +8,7 @@ AI-powered companion for [codeable_cli](https://pub.dev/packages/codeable_cli) â
 
 ### Via Plugin Marketplace
 ```
-/plugin marketplace add codeable/codeable-claude-plugin
+/plugin marketplace add gocodeable/codeable-claude-plugin
 /plugin install codeable@codeable
 ```
 
