@@ -10,8 +10,8 @@
       "description": "AI-powered companion for codeable_cli — skills, commands, and agents for Flutter Clean Architecture projects. Feature scaffolding, API wiring, localization, dead code cleanup, release builds, and more.",
       "version": "1.0.0",
       "source": {
-        "type": "git",
-        "url": "https://github.com/gocodeable/codeable-claude-plugin"
+        "source": "github",
+        "repo": "gocodeable/codeable-claude-plugin"
       }
     }
   ]
