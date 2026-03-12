@@ -25,11 +25,27 @@ Built for **Flutter developers** who use Clean Architecture and want Claude to u
 
 Projects created with `codeable_cli create` include this plugin automatically via `.claude/settings.json`. No setup required — just open the project in Claude Code.
 
-### Manual
+### Manual (existing projects)
 
-```bash
-claude plugin add gocodeable/codeable-flutter-cli-claude-plugin
+Add this to `.claude/settings.json` in your project root:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "codeable-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "gocodeable/codeable-flutter-cli-claude-plugin"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "codeable-flutter-cli@codeable-plugins": true
+  }
+}
 ```
+
+Claude Code will auto-install the plugin on next launch.
 
 ---
 
