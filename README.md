@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/CLAUDE-PLUGIN-b7ff00?style=for-the-badge&labelColor=0e0926" alt="Claude Plugin" />
   <img src="https://img.shields.io/badge/FLUTTER-352e5c?style=for-the-badge&labelColor=0e0926&logo=flutter&logoColor=b7ff00" alt="Flutter" />
   <img src="https://img.shields.io/badge/DART-352e5c?style=for-the-badge&labelColor=0e0926&logo=dart&logoColor=b7ff00" alt="Dart" />
-  <img src="https://img.shields.io/badge/v1.1.0-6b6190?style=for-the-badge&labelColor=0e0926" alt="v1.1.0" />
+  <img src="https://img.shields.io/badge/v1.1.1-6b6190?style=for-the-badge&labelColor=0e0926" alt="v1.1.1" />
 </p>
 
 <p align="center">
