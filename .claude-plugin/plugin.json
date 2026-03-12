@@ -16,6 +16,5 @@
     "bloc",
     "cubit",
     "codeable_cli"
-  ],
-  "minClaudeCodeVersion": "1.0.33"
+  ]
 }
