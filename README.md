@@ -30,7 +30,7 @@ Projects created with `codeable_cli create` include this plugin automatically vi
 Run these two commands inside Claude Code:
 
 ```
-/plugin marketplace add gocodeable/codeable-flutter-cli-claude-plugin
+/plugin marketplace add https://github.com/gocodeable/codeable-flutter-cli-claude-plugin.git
 /plugin install codeable-flutter-cli@codeable-plugins
 ```
 
