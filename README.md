@@ -28,7 +28,7 @@ Projects created with `codeable_cli create` include this plugin automatically vi
 ### Manual
 
 ```bash
-claude plugin add gocodeable/codeable-claude-plugin
+claude plugin add gocodeable/codeable-flutter-cli-claude-plugin
 ```
 
 ---
