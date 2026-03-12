@@ -27,22 +27,17 @@ Projects created with `codeable_cli create` include this plugin automatically vi
 
 ### Manual (existing projects)
 
-Add this to `.claude/settings.json` in your project root:
+Run these two commands inside Claude Code:
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "codeable-plugins": {
-      "source": {
-        "source": "github",
-        "repo": "gocodeable/codeable-flutter-cli-claude-plugin"
-      }
-    }
-  },
-  "enabledPlugins": {
-    "codeable-flutter-cli@codeable-plugins": true
-  }
-}
+```
+/plugin marketplace add gocodeable/codeable-flutter-cli-claude-plugin
+/plugin install codeable-flutter-cli@codeable-plugins
+```
+
+To install for the whole team (writes to `.claude/settings.json`):
+
+```
+/plugin install codeable-flutter-cli@codeable-plugins --scope project
 ```
 
 Claude Code will auto-install the plugin on next launch.
