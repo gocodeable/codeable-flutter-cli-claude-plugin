@@ -1,23 +1,39 @@
-# Codeable Claude Plugin
+<p align="center">
+  <img src="https://img.shields.io/badge/CLAUDE-PLUGIN-b7ff00?style=for-the-badge&labelColor=0e0926" alt="Claude Plugin" />
+  <img src="https://img.shields.io/badge/FLUTTER-352e5c?style=for-the-badge&labelColor=0e0926&logo=flutter&logoColor=b7ff00" alt="Flutter" />
+  <img src="https://img.shields.io/badge/DART-352e5c?style=for-the-badge&labelColor=0e0926&logo=dart&logoColor=b7ff00" alt="Dart" />
+  <img src="https://img.shields.io/badge/v1.1.0-6b6190?style=for-the-badge&labelColor=0e0926" alt="v1.1.0" />
+</p>
 
-AI-powered companion for [codeable_cli](https://pub.dev/packages/codeable_cli) — the Flutter Clean Architecture scaffolding tool.
+<p align="center">
+  <strong>AI-powered companion for Codeable Flutter CLI — 13 skills, 38 commands, 9 agents, and 2 hooks for Flutter Clean Architecture projects.</strong>
+</p>
 
-**13 skills, 34 commands, 9 agents, 2 hooks** — everything Claude needs to work expertly with codeable_cli projects.
+---
+
+## Overview
+
+The **Codeable Flutter CLI — Claude Plugin** gives Claude deep knowledge of the [codeable_cli](https://pub.dev/packages/codeable_cli) architecture so it can scaffold features, wire layers, generate tests, and enforce conventions — all through natural conversation.
+
+Built for **Flutter developers** who use Clean Architecture and want Claude to understand their project structure out of the box.
+
+---
 
 ## Installation
 
-### Via Plugin Marketplace
-```
-/plugin marketplace add gocodeable/codeable-claude-plugin
-/plugin install codeable@codeable
-```
+### Auto-installed
 
-### Local Development
+Projects created with `codeable_cli create` include this plugin automatically via `.claude/settings.json`. No setup required — just open the project in Claude Code.
+
+### Manual
+
 ```bash
-claude --plugin-dir ./codeable-claude-plugin
+claude plugin add gocodeable/codeable-claude-plugin
 ```
 
-## Skills (13 — Auto-invoked)
+---
+
+## Skills (13)
 
 Automatically loaded into Claude's context for deep architecture awareness.
 
@@ -37,9 +53,12 @@ Automatically loaded into Claude's context for deep architecture awareness.
 | `animation-patterns` | Implicit/explicit animations, hero, staggered lists, shimmer |
 | `accessibility-patterns` | Semantics, touch targets, contrast, screen reader, text scaling |
 
-## Commands (34 — User-invoked)
+---
 
-### Feature Scaffolding
+## Commands (38)
+
+### Feature Scaffolding (5)
+
 | Command | Description |
 |---------|-------------|
 | `/codeable:feature` | Scaffold new feature with all layers wired |
@@ -48,7 +67,8 @@ Automatically loaded into Claude's context for deep architecture awareness.
 | `/codeable:add-auth-flow` | Login, register, forgot password, OTP, route guards |
 | `/codeable:add-onboarding` | Walkthrough with PageView, dots, persistence |
 
-### API & Data
+### API & Data (7)
+
 | Command | Description |
 |---------|-------------|
 | `/codeable:add-api` | Wire API endpoint end-to-end (endpoint → model → repo → cubit) |
@@ -57,8 +77,10 @@ Automatically loaded into Claude's context for deep architecture awareness.
 | `/codeable:add-cache` | Hive caching with cache-then-network strategy |
 | `/codeable:add-socket` | WebSocket real-time connection with auto-reconnect |
 | `/codeable:add-image-upload` | Camera/gallery pick, crop, compress, multipart upload |
+| `/codeable:add-hive-model` | Generate Hive TypeAdapter model with box helpers |
 
-### UI Patterns
+### UI Patterns (12)
+
 | Command | Description |
 |---------|-------------|
 | `/codeable:add-form` | Form screen with validation, controllers, submission |
@@ -72,22 +94,43 @@ Automatically loaded into Claude's context for deep architecture awareness.
 | `/codeable:extract-widget` | Extract section from build method |
 | `/codeable:convert-to-sliver` | Convert to CustomScrollView with Slivers |
 | `/codeable:responsive` | Phone + tablet responsive layouts |
-| `/codeable:add-deeplink` | Android App Links + iOS Universal Links |
-| `/codeable:dark-mode` | Theme switching with persistence |
+| `/codeable:implement-screen` | Implement a screen from a design or spec |
 
-### Localization & RTL
+### Firebase & Config (1)
+
+| Command | Description |
+|---------|-------------|
+| `/codeable:add-firebase-config` | Add Firebase configuration with multi-flavor support |
+
+### Networking (1)
+
+| Command | Description |
+|---------|-------------|
+| `/codeable:add-interceptor` | Add custom Dio interceptor with request/response hooks |
+
+### Localization & RTL (2)
+
 | Command | Description |
 |---------|-------------|
 | `/codeable:localize` | Localize hardcoded strings using context.l10n |
 | `/codeable:fix-rtl` | Migrate to RTL-safe layout properties |
 
-### Wiring
+### Deeplinks & Theming (2)
+
+| Command | Description |
+|---------|-------------|
+| `/codeable:add-deeplink` | Android App Links + iOS Universal Links |
+| `/codeable:dark-mode` | Theme switching with persistence |
+
+### Wiring (2)
+
 | Command | Description |
 |---------|-------------|
 | `/codeable:wire-route` | Wire routing for existing screen |
 | `/codeable:wire-di` | Wire DI registration for existing feature |
 
-### Quality & Build
+### Quality & Build (6)
+
 | Command | Description |
 |---------|-------------|
 | `/codeable:simplify` | Review changed code for quality and fix |
@@ -97,7 +140,9 @@ Automatically loaded into Claude's context for deep architecture awareness.
 | `/codeable:refactor-feature` | Split large feature into sub-features |
 | `/codeable:release-build` | Dead code cleanup + optimized release APK/AAB |
 
-## Agents (9 — Delegated)
+---
+
+## Agents (9)
 
 | Agent | Description |
 |-------|-------------|
@@ -111,18 +156,37 @@ Automatically loaded into Claude's context for deep architecture awareness.
 | `security-auditor` | OWASP Mobile Top 10 security review |
 | `dependency-updater` | Safe dependency updates with breaking change awareness |
 
-## Hooks (2 — Auto-triggered)
+---
+
+## Hooks (2)
 
 | Hook | Trigger | Description |
 |------|---------|-------------|
 | Post-edit lint | After Write/Edit on `.dart` files | Runs `dart analyze` on edited file |
 | Stop summary | When Claude finishes | Shows final analysis summary |
 
+---
+
 ## Requirements
 
 - Claude Code v1.0.33+
 - Flutter project generated by `codeable_cli`
 
+---
+
 ## License
 
 MIT
+
+<p align="center">
+  <br />
+  <a href="https://gocodeable.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/codeable_wordmark_white.svg" />
+      <source media="(prefers-color-scheme: light)" srcset="assets/codeable_wordmark.svg" />
+      <img src="assets/codeable_wordmark.svg" alt="Codeable" width="140" />
+    </picture>
+  </a>
+  <br />
+  <sub>Built by <a href="https://gocodeable.com">Codeable</a></sub>
+</p>

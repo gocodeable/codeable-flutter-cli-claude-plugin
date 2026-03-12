@@ -1,12 +1,12 @@
 ---
-description: Generate unit tests for a feature — cubit tests with bloc_test, repository mock tests, model serialization tests, and widget tests with mocktail.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
+description: Generate unit tests for a feature — cubit tests with bloc_test, repository mock tests with mocktail, model serialization tests, and widget tests.
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, TodoWrite
 argument-hint: "<feature_path> [--cubit|--repo|--models|--widgets|--all]"
 ---
 
 # Generate Tests
 
-Generate comprehensive tests for a codeable_cli feature.
+Generate comprehensive tests for a codeable_cli feature using **mocktail** (not mockito) and **bloc_test**.
 
 ## Arguments
 
@@ -17,6 +17,18 @@ Generate comprehensive tests for a codeable_cli feature.
 Read the feature's cubit, state, repository (interface + impl), models, and screen/widget files.
 
 ## Step 2: Generate Test Files
+
+### Mock Data Constants
+
+At the top of every test file, define mock data constants so they can be reused across tests:
+
+```dart
+// -- Mock Data --
+const tItemModel = ItemModel(id: '1', name: 'Test Item', price: 9.99);
+const tItemModel2 = ItemModel(id: '2', name: 'Test Item 2', price: 19.99);
+const tItemList = [tItemModel, tItemModel2];
+const tErrorMessage = 'Something went wrong';
+```
 
 ### Cubit Tests (`test/features/{role}/{feature}/cubit/{feature}_cubit_test.dart`):
 
@@ -40,44 +52,106 @@ void main() {
 
   tearDown(() => cubit.close());
 
-  test('initial state', () {
+  test('initial state is correct', () {
     expect(cubit.state, const FeatureState());
   });
 
-  // For EACH cubit method, generate:
-  // 1. Success test
-  // 2. Failure test
-  // 3. Edge case tests (empty data, null fields)
+  group('fetchData', () {
+    blocTest<FeatureCubit, FeatureState>(
+      'emits [loading, loaded] on success',
+      build: () {
+        when(() => repository.fetchData()).thenAnswer(
+          (_) async => RepositoryResponse(isSuccess: true, data: tItemList),
+        );
+        return cubit;
+      },
+      act: (cubit) => cubit.fetchData(),
+      expect: () => [
+        const FeatureState(someData: DataState.loading()),
+        FeatureState(someData: DataState.loaded(data: tItemList)),
+      ],
+    );
 
-  blocTest<FeatureCubit, FeatureState>(
-    'fetchData emits [loading, loaded] on success',
-    build: () {
-      when(() => repository.fetchData()).thenAnswer(
-        (_) async => RepositoryResponse(isSuccess: true, data: mockData),
-      );
-      return cubit;
-    },
-    act: (cubit) => cubit.fetchData(),
-    expect: () => [
-      const FeatureState(someData: DataState.loading()),
-      FeatureState(someData: DataState.loaded(data: mockData)),
-    ],
-  );
+    blocTest<FeatureCubit, FeatureState>(
+      'emits [loading, failure] on error',
+      build: () {
+        when(() => repository.fetchData()).thenAnswer(
+          (_) async => RepositoryResponse(isSuccess: false, message: tErrorMessage),
+        );
+        return cubit;
+      },
+      act: (cubit) => cubit.fetchData(),
+      expect: () => [
+        const FeatureState(someData: DataState.loading()),
+        const FeatureState(someData: DataState.failure(error: tErrorMessage)),
+      ],
+    );
 
-  blocTest<FeatureCubit, FeatureState>(
-    'fetchData emits [loading, failure] on error',
-    build: () {
-      when(() => repository.fetchData()).thenAnswer(
-        (_) async => RepositoryResponse(isSuccess: false, message: 'Error'),
+    blocTest<FeatureCubit, FeatureState>(
+      'emits [loading, loaded] with empty list when no data',
+      build: () {
+        when(() => repository.fetchData()).thenAnswer(
+          (_) async => RepositoryResponse(isSuccess: true, data: <ItemModel>[]),
+        );
+        return cubit;
+      },
+      act: (cubit) => cubit.fetchData(),
+      expect: () => [
+        const FeatureState(someData: DataState.loading()),
+        const FeatureState(someData: DataState.loaded(data: [])),
+      ],
+    );
+  });
+}
+```
+
+### Repository Impl Tests (`test/features/{role}/{feature}/data/{feature}_repository_impl_test.dart`):
+
+Test the repository implementation with a **mocked ApiService**:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockApiService extends Mock implements ApiService {}
+
+void main() {
+  late FeatureRepositoryImpl repository;
+  late MockApiService apiService;
+
+  setUp(() {
+    apiService = MockApiService();
+    repository = FeatureRepositoryImpl(apiService: apiService);
+  });
+
+  group('fetchData', () {
+    test('returns success with parsed data on 200', () async {
+      when(() => apiService.get(Endpoints.items)).thenAnswer(
+        (_) async => Response(
+          data: {'data': [tItemJson]},
+          statusCode: 200,
+          requestOptions: RequestOptions(),
+        ),
       );
-      return cubit;
-    },
-    act: (cubit) => cubit.fetchData(),
-    expect: () => [
-      const FeatureState(someData: DataState.loading()),
-      const FeatureState(someData: DataState.failure(error: 'Error')),
-    ],
-  );
+
+      final result = await repository.fetchData();
+
+      expect(result.isSuccess, true);
+      expect(result.data, isNotNull);
+      expect(result.data!.first.id, tItemModel.id);
+    });
+
+    test('returns failure on AppApiException', () async {
+      when(() => apiService.get(Endpoints.items)).thenThrow(
+        AppApiException(message: tErrorMessage),
+      );
+
+      final result = await repository.fetchData();
+
+      expect(result.isSuccess, false);
+      expect(result.message, tErrorMessage);
+    });
+  });
 }
 ```
 
@@ -93,9 +167,9 @@ For each model, test:
 ### Widget Tests (`test/features/{role}/{feature}/widgets/{screen}_test.dart`):
 
 For each screen, test:
-- Loading state shows `LoadingWidget`
+- Loading state shows `CircularProgressIndicator` / `LoadingWidget`
 - Loaded state shows expected content
-- Failure state shows `RetryWidget`
+- Failure state shows error message / `RetryWidget`
 - Button taps call correct cubit methods
 - Form validation (for form screens)
 
@@ -120,10 +194,12 @@ Fix any failures.
 
 ## Rules
 
-- Use `mocktail` for mocking (not `mockito`).
-- Use `bloc_test` for cubit tests.
-- Mock repositories, not ApiService (test cubit logic, not HTTP).
-- Test all state transitions (loading → loaded, loading → failure).
-- Create mock data constants at the top of test files.
+- Use `mocktail` for mocking (NEVER `mockito` -- no code generation needed).
+- Use `bloc_test` and `blocTest<Cubit, State>()` for cubit tests.
+- Mock data constants defined at the **top** of each test file with `t` prefix (e.g., `tItemModel`, `tErrorMessage`).
+- Mock repositories when testing cubits, mock ApiService when testing repository impls.
+- Test all state transitions (loading -> loaded, loading -> failure).
 - Group related tests with `group()`.
 - Use `setUp` and `tearDown` for cubit lifecycle.
+- Register fallback values for complex types: `registerFallbackValue(...)` in `setUpAll`.
+- Every cubit method should have at minimum: success test, failure test, edge case test.

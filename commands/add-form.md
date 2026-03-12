@@ -1,6 +1,6 @@
 ---
 description: Generate a form screen with validation, text controllers, form key, and submission wired to a cubit method. Supports text fields, dropdowns, date/time pickers, and image pickers.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, TodoWrite
 argument-hint: "<feature_path> <form_name> --fields 'name:text,email:email,date:date,image:image'"
 ---
 
@@ -16,24 +16,24 @@ Parse `$ARGUMENTS` for:
 - **Fields**: Comma-separated `name:type` pairs
 
 Supported field types:
-- `text` — standard text field
-- `email` — email text field with validation
-- `password` — password field with toggle
-- `phone` — phone number field
-- `number` — numeric input
-- `multiline` — multi-line text area
-- `date` — date picker
-- `time` — time picker
-- `dropdown` — dropdown selector
-- `image` — image picker
-- `switch` — toggle switch
-- `checkbox` — checkbox
+- `text` -- standard text field
+- `email` -- email text field with validation
+- `password` -- password field with toggle
+- `phone` -- phone number field
+- `number` -- numeric input
+- `multiline` -- multi-line text area
+- `date` -- date picker
+- `time` -- time picker
+- `dropdown` -- dropdown selector
+- `image` -- image picker
+- `switch` -- toggle switch
+- `checkbox` -- checkbox
 
 If fields not provided, ask the user.
 
 ## Step 1: Detect Project Configuration
 
-Read the feature's existing cubit, state, and available core widgets.
+Read the feature's existing cubit, state, and available core widgets (CustomTextField, CustomButton, etc.).
 
 ## Step 2: Create Form Screen
 
@@ -79,39 +79,45 @@ class _{Prefix}{Form}ScreenState extends State<{Prefix}{Form}Screen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: mueblyAppBar(context: context, title: '{Form Title}'),
+      appBar: CustomAppBar(context: context, title: context.l10n.formTitle),
       body: BlocConsumer<{Prefix}Cubit, {Prefix}State>(
         listenWhen: (prev, curr) => prev.submitData != curr.submitData,
         listener: (context, state) {
           if (state.submitData.isLoaded) {
-            ToastHelper.showSuccessToast('Saved successfully');
+            ToastHelper.showSuccessToast(context.l10n.savedSuccessfully);
             context.pop();
           }
           if (state.submitData.isFailure) {
-            ToastHelper.showErrorToast(state.submitData.errorMessage ?? 'Failed');
+            ToastHelper.showErrorToast(
+              state.submitData.errorMessage ?? context.l10n.somethingWentWrong,
+            );
           }
         },
         builder: (context, state) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
                 children: [
-                  MueblyTextField(
+                  CustomTextField(
                     controller: _nameController,
-                    labelText: 'Name',
-                    validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                    labelText: context.l10n.name,
+                    validator: (v) =>
+                        v?.isEmpty ?? true ? context.l10n.fieldRequired : null,
                   ),
                   const SizedBox(height: 16),
-                  MueblyTextField(
+                  CustomTextField(
                     controller: _emailController,
-                    type: MueblyTextFieldType.email,
-                    labelText: 'Email',
+                    type: CustomTextFieldType.email,
+                    labelText: context.l10n.email,
                   ),
                   const SizedBox(height: 24),
-                  MueblyButton(
-                    text: 'Submit',
+                  CustomButton(
+                    text: context.l10n.submit,
                     isLoading: state.submitData.isLoading,
                     disabled: state.submitData.isLoading,
                     onPressed: state.submitData.isLoading ? null : _onSubmit,
@@ -142,9 +148,11 @@ Run `dart analyze lib/` and fix any issues.
 ## Rules
 
 - Use `StatefulWidget` for forms (needs controllers + dispose).
-- Use `BlocConsumer` for forms (listener for success/error feedback, builder for loading).
-- Use `MueblyTextField` from core widgets.
-- Use `MueblyButton` with `isLoading` for submit.
+- Use `BlocConsumer` for forms: **listener** for side effects (success toast, navigation, error toast), **builder** for rendering loading state on the submit button.
+- Use `ToastHelper.showSuccessToast()` / `ToastHelper.showErrorToast()` for user feedback.
+- Use `EdgeInsetsDirectional` for all padding/margin (never `EdgeInsets.only(left:)` or `EdgeInsets.only(right:)` -- supports RTL).
+- Use `context.l10n.keyName` for ALL user-facing strings (never hardcoded strings in UI).
+- Use `CustomTextField` / `CustomButton` from core widgets.
 - Dispose all controllers in `dispose()`.
 - Use `Form` with `GlobalKey<FormState>` for validation.
 - Trim text inputs before submitting.

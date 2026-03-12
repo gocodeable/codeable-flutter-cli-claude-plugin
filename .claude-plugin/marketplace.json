@@ -1,14 +1,14 @@
 {
-  "name": "codeable",
+  "name": "codeable-flutter-cli",
   "owner": {
     "name": "gocodeable",
     "url": "https://github.com/gocodeable"
   },
   "plugins": [
     {
-      "name": "codeable",
-      "description": "AI-powered companion for codeable_cli — skills, commands, and agents for Flutter Clean Architecture projects. Feature scaffolding, API wiring, localization, dead code cleanup, release builds, and more.",
-      "version": "1.0.0",
+      "name": "codeable-flutter-cli",
+      "description": "AI-powered companion for Codeable Flutter CLI — skills, commands, agents, and hooks for Flutter Clean Architecture projects. Feature scaffolding, API wiring, testing, localization, Firebase config, and more.",
+      "version": "1.1.0",
       "source": {
         "source": "github",
         "repo": "gocodeable/codeable-claude-plugin"

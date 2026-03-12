@@ -1,12 +1,12 @@
 ---
-description: Add pagination (infinite scroll) to an existing list in a feature — wires up page tracking, scroll listener, pageLoading state, and list append logic.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
+description: Add pagination (infinite scroll) to an existing list in a feature — uses PaginationModel in cubit state, pageLoading for appending, and PaginatedListView from core widgets.
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, TodoWrite
 argument-hint: "<feature_path> <list_field_name>"
 ---
 
 # Add Pagination
 
-Add infinite scroll pagination to an existing list in a codeable_cli feature.
+Add infinite scroll pagination to an existing list in a codeable_cli feature using a **PaginationModel** approach.
 
 ## Arguments
 
@@ -15,141 +15,208 @@ Add infinite scroll pagination to an existing list in a codeable_cli feature.
 ## Step 1: Read Existing Code
 
 1. Read the feature's state, cubit, repository interface, and impl.
-2. Identify the list data field and its type.
+2. Identify the list data field and its type (e.g., `DataState<List<ItemModel>>`).
 3. Read the screen/widget that displays the list.
+4. Check if a `PaginationModel` already exists in the project (search `lib/core/models/`).
 
-## Step 2: Update State
+## Step 2: Create PaginationModel (if not exists)
 
-Add pagination tracking fields:
+If the project does not already have a `PaginationModel`, create it at `lib/core/models/pagination_model.dart`:
+
+```dart
+import 'package:equatable/equatable.dart';
+
+class PaginationModel<T> extends Equatable {
+  const PaginationModel({
+    this.items = const [],
+    this.currentPage = 1,
+    this.totalPages = 1,
+    this.perPage = 10,
+  });
+
+  final List<T> items;
+  final int currentPage;
+  final int totalPages;
+  final int perPage;
+
+  bool get hasMore => currentPage < totalPages;
+
+  PaginationModel<T> copyWith({
+    List<T>? items,
+    int? currentPage,
+    int? totalPages,
+    int? perPage,
+  }) {
+    return PaginationModel<T>(
+      items: items ?? this.items,
+      currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
+      perPage: perPage ?? this.perPage,
+    );
+  }
+
+  @override
+  List<Object?> get props => [items, currentPage, totalPages, perPage];
+}
+```
+
+## Step 3: Update State
+
+Replace the separate list field with a `PaginationModel` wrapped in `DataState`:
+
 ```dart
 const FeatureState({
   this.itemsData = const DataState.initial(),
-  this.currentPage = 1,
-  this.hasMorePages = true,
 });
 
-final DataState<List<ItemModel>> itemsData;
-final int currentPage;
-final bool hasMorePages;
+final DataState<PaginationModel<ItemModel>> itemsData;
 ```
 
-## Step 3: Update Repository
+Do NOT use separate `currentPage` / `hasMorePages` fields. Everything lives inside `PaginationModel`.
 
-Update the fetch method to accept page/limit:
+## Step 4: Update Repository
+
+Update the fetch method to accept page/limit and return pagination metadata:
 ```dart
 // Interface
-Future<RepositoryResponse<ItemsData>> fetchItems({int page = 1, int limit = 10});
+Future<RepositoryResponse<PaginationModel<ItemModel>>> fetchItems({int page = 1, int limit = 10});
 
 // Implementation
 @override
-Future<RepositoryResponse<ItemsData>> fetchItems({int page = 1, int limit = 10}) async {
+Future<RepositoryResponse<PaginationModel<ItemModel>>> fetchItems({int page = 1, int limit = 10}) async {
   try {
     final response = await _apiService.get(
       Endpoints.items,
       queryParams: {'page': page, 'limit': limit},
     );
-    // ... parse response
+    final data = response.data as Map<String, dynamic>;
+    final items = (data['data'] as List<dynamic>?)
+            ?.map((e) => ItemModel.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+    final pagination = PaginationModel<ItemModel>(
+      items: items,
+      currentPage: (data['current_page'] as num?)?.toInt() ?? page,
+      totalPages: (data['last_page'] as num?)?.toInt() ?? 1,
+      perPage: (data['per_page'] as num?)?.toInt() ?? limit,
+    );
+    return RepositoryResponse(isSuccess: true, data: pagination);
   } on AppApiException catch (e) {
     return RepositoryResponse(isSuccess: false, message: e.message);
   }
 }
 ```
 
-## Step 4: Update Cubit
+## Step 5: Update Cubit
 
-Add initial fetch and load more methods:
+Add three methods: `fetchItems()`, `loadNextPage()`, and `refresh()`:
+
 ```dart
 Future<void> fetchItems() async {
   emit(state.copyWith(
     itemsData: const DataState.loading(),
-    currentPage: 1,
-    hasMorePages: true,
   ));
 
   final result = await repository.fetchItems(page: 1);
   if (result.isSuccess && result.data != null) {
-    final items = result.data!.items;
     emit(state.copyWith(
-      itemsData: DataState.loaded(data: items),
-      hasMorePages: items.length >= 10,
+      itemsData: DataState.loaded(data: result.data!),
     ));
   } else {
-    emit(state.copyWith(itemsData: DataState.failure(error: result.message)));
+    emit(state.copyWith(
+      itemsData: DataState.failure(error: result.message),
+    ));
   }
 }
 
-Future<void> loadMoreItems() async {
-  if (!state.hasMorePages || state.itemsData.isPageLoading) return;
+Future<void> loadNextPage() async {
+  final currentData = state.itemsData.data;
+  if (currentData == null || !currentData.hasMore || state.itemsData.isPageLoading) return;
 
-  final nextPage = state.currentPage + 1;
-  emit(state.copyWith(itemsData: state.itemsData.toPageLoading()));
+  emit(state.copyWith(
+    itemsData: state.itemsData.toPageLoading(),
+  ));
 
+  final nextPage = currentData.currentPage + 1;
   final result = await repository.fetchItems(page: nextPage);
+
   if (result.isSuccess && result.data != null) {
-    final newItems = result.data!.items;
-    final allItems = [...(state.itemsData.data ?? []), ...newItems];
+    final newPageData = result.data!;
+    final allItems = [...currentData.items, ...newPageData.items];
     emit(state.copyWith(
-      itemsData: DataState.loaded(data: allItems),
-      currentPage: nextPage,
-      hasMorePages: newItems.length >= 10,
+      itemsData: DataState.loaded(
+        data: currentData.copyWith(
+          items: allItems,
+          currentPage: newPageData.currentPage,
+          totalPages: newPageData.totalPages,
+        ),
+      ),
     ));
   } else {
+    // Revert to loaded state on failure (keep existing data)
     emit(state.copyWith(
-      itemsData: state.itemsData.toLoaded(),
+      itemsData: DataState.loaded(data: currentData),
     ));
   }
 }
-```
 
-## Step 5: Update UI
-
-If the project has `PaginatedListView`, use it:
-```dart
-PaginatedListView(
-  itemCount: items.length,
-  hasMore: state.hasMorePages,
-  isLoadingMore: state.itemsData.isPageLoading,
-  onLoadMore: () => context.read<FeatureCubit>().loadMoreItems(),
-  itemBuilder: (context, index) => ItemCard(item: items[index]),
-)
-```
-
-Otherwise, add a `ScrollController`:
-```dart
-class _ScreenState extends State<Screen> {
-  final _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      context.read<FeatureCubit>().loadMoreItems();
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
+Future<void> refresh() async {
+  await fetchItems();
 }
 ```
 
-## Step 6: Add Pull-to-Refresh
+## Step 6: Update UI
 
-Wrap the list in `RefreshIndicator`:
+Wire to `PaginatedListView` from core widgets:
 ```dart
-RefreshIndicator(
-  onRefresh: () => context.read<FeatureCubit>().fetchItems(),
-  child: ListView.builder(...),
+BlocBuilder<FeatureCubit, FeatureState>(
+  builder: (context, state) {
+    final itemsData = state.itemsData;
+    if (itemsData.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (itemsData.isFailure) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(itemsData.errorMessage ?? context.l10n.somethingWentWrong),
+            const SizedBox(height: 8),
+            CustomButton(
+              text: context.l10n.retry,
+              onPressed: () => context.read<FeatureCubit>().fetchItems(),
+            ),
+          ],
+        ),
+      );
+    }
+    final paginationModel = itemsData.data;
+    if (paginationModel == null || paginationModel.items.isEmpty) {
+      return Center(child: Text(context.l10n.noItemsFound));
+    }
+    return RefreshIndicator(
+      onRefresh: () => context.read<FeatureCubit>().refresh(),
+      child: PaginatedListView(
+        itemCount: paginationModel.items.length,
+        hasMore: paginationModel.hasMore,
+        isLoadingMore: itemsData.isPageLoading,
+        onLoadMore: () => context.read<FeatureCubit>().loadNextPage(),
+        itemBuilder: (context, index) => ItemCard(item: paginationModel.items[index]),
+      ),
+    );
+  },
 )
 ```
 
 ## Step 7: Verify
 
 Run `dart analyze lib/` and fix any issues.
+
+## Rules
+
+- Store `DataState<PaginationModel<ItemModel>>` in state, NOT separate `currentPage`/`hasMorePages` fields.
+- `loadNextPage` uses `DataState.pageLoading` and APPENDS items to existing list.
+- `refresh` resets to page 1 (calls `fetchItems()`).
+- Guard `loadNextPage` against: no data, no more pages, already page-loading.
+- Use `PaginatedListView` from core widgets when available.
+- Parse pagination metadata (current_page, last_page, per_page) from API response.
