@@ -34,7 +34,11 @@ List<ItemModel>? getCachedItems() {
   if (data == null) return null;
   final jsonList = jsonDecode(data) as List<dynamic>;
   return jsonList
-      .map((e) => ItemModel.fromJson(e as Map<String, dynamic>))
+      .whereType<Map<String, dynamic>>()
+      .map((e) {
+        try { return ItemModel.fromJson(e); } catch (_) { return null; }
+      })
+      .whereType<ItemModel>()
       .toList();
 }
 

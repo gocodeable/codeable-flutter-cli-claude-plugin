@@ -1,6 +1,6 @@
 ---
 name: error-handling
-description: Error handling strategy for codeable_cli projects — API errors, global error handling, toast notifications, retry patterns, and error boundaries.
+description: Error handling strategy for codeable_cli projects — API errors, network errors, global error handling, toast notifications, retry patterns, and error boundaries.
 ---
 
 # Error Handling Patterns
@@ -10,10 +10,12 @@ description: Error handling strategy for codeable_cli projects — API errors, g
 ```
 API Request (Dio)
   → DioException caught by ApiService._handleRequest()
+    → Has response? → Extract server message from response.data['error']['message']
+    → No response? → Map DioExceptionType to user-friendly message
     → Converted to AppApiException(message, statusCode, responseData)
-  → Repository catches AppApiException
-    → Returns RepositoryResponse(isSuccess: false, message: ...)
-  → Cubit receives failed response
+  → Repository catches ONLY AppApiException
+    → Returns RepositoryResponse(isSuccess: false, message: e.message)
+  → Cubit receives failed response (NO try-catch in cubit)
     → Emits DataState.failure(error: message)
   → UI checks state.isFailure
     → Shows RetryWidget or toast
@@ -30,32 +32,61 @@ class AppApiException implements Exception {
 }
 ```
 
-**Error message extraction from API responses:**
-1. Try `response.data['error']['message']` (structured error)
-2. Fall back to HTTP status messages:
-   - 400: Bad request
-   - 401: Unauthorized (triggers token refresh)
-   - 403: Forbidden
-   - 404: Not found
-   - 500: Internal server error
-3. Final fallback: DioException message
+## Network Error Handling (in ApiService._handleDioError)
+
+When `e.response` is null (no server response), errors are mapped by `DioExceptionType`:
+
+| DioExceptionType | User Message |
+|------------------|-------------|
+| `connectionTimeout`, `sendTimeout`, `receiveTimeout` | "Connection timed out. Please try again." |
+| `connectionError` (no WiFi, DNS failure) | "No internet connection. Please check your network and try again." |
+| `cancel` | "Request was cancelled." |
+| default | "Something went wrong. Please try again." |
+
+When `e.response` exists (server responded), backend error messages pass through as-is.
 
 ## Repository Error Handling
 
-ALWAYS catch `AppApiException` — NEVER catch bare `Exception`:
+**ONLY catch `AppApiException`** — no generic `catch (e)`:
 ```dart
 try {
   final response = await _apiService.get(Endpoints.data);
-  // ... parse
+  final result = ResponseModel.fromApiResponse(response, DataResponseModel.fromJson);
+  if (result.isSuccess) {
+    return RepositoryResponse(isSuccess: true, data: result.response?.data);
+  }
+  return RepositoryResponse(isSuccess: false, message: result.error ?? 'Failed to fetch data');
 } on AppApiException catch (e) {
   return RepositoryResponse(isSuccess: false, message: e.message);
 }
 ```
 
-Use the helper for extraction:
+**WHY no generic catch?** ApiService._handleRequest() already catches ALL exceptions (DioException + generic) and wraps them into AppApiException. The repository never sees raw exceptions.
+
+## Cubit Error Handling
+
+**Cubits do NOT have try-catch blocks.** Error handling belongs in the repository layer.
+
 ```dart
-String extractApiErrorMessage(Object e, String fallback) =>
-    e is AppApiException ? e.message : fallback;
+// CORRECT — no try-catch
+Future<void> fetchData() async {
+  emit(state.copyWith(data: const DataState.loading()));
+  final result = await repository.fetchData();
+  if (result.isSuccess) {
+    emit(state.copyWith(data: DataState.loaded(data: result.data)));
+  } else {
+    emit(state.copyWith(data: DataState.failure(error: result.message)));
+  }
+}
+
+// WRONG — never do this in a cubit
+Future<void> fetchData() async {
+  try {
+    // ...
+  } catch (e) {
+    emit(state.copyWith(data: DataState.failure(error: e.toString())));
+  }
+}
 ```
 
 ## UI Error Display
@@ -122,16 +153,4 @@ PlatformDispatcher.instance.onError = (error, stack) {
   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
   return true;
 };
-```
-
-## Connectivity Handling
-
-Check connectivity before API calls or show offline banner:
-```dart
-// Using connectivity_plus package
-final result = await Connectivity().checkConnectivity();
-if (result == ConnectivityResult.none) {
-  ToastHelper.showErrorToast('No internet connection');
-  return;
-}
 ```

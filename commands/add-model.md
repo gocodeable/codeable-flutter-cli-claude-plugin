@@ -60,7 +60,11 @@ class OrderModel extends Equatable {
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
       tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => TagModel.fromJson(e as Map<String, dynamic>))
+              ?.whereType<Map<String, dynamic>>()
+              .map((e) {
+                try { return TagModel.fromJson(e); } catch (_) { return null; }
+              })
+              .whereType<TagModel>()
               .toList() ??
           [],
       address: json['address'] != null
@@ -118,7 +122,7 @@ class OrderModel extends Equatable {
 - Bools: `json['key'] as bool? ?? false`
 - Nullable: `json['key'] as Type?` (no default)
 - Lists: `(json['key'] as List<dynamic>?)?.map(...).toList() ?? []`
-- `List<T>` of models: `?.map((e) => T.fromJson(e as Map<String, dynamic>)).toList() ?? []`
+- `List<T>` of models (safe parsing): `?.whereType<Map<String, dynamic>>().map((e) { try { return T.fromJson(e); } catch (_) { return null; } }).whereType<T>().toList() ?? []`
 - `List<String>`: `?.map((e) => e as String).toList() ?? []`
 - Nested objects: null-check + `Model.fromJson(json['key'] as Map<String, dynamic>)`
 - DateTime: `json['key'] != null ? DateTime.tryParse(json['key'] as String? ?? '') : null`

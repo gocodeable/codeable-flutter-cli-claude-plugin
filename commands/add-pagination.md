@@ -91,7 +91,11 @@ Future<RepositoryResponse<PaginationModel<ItemModel>>> fetchItems({int page = 1,
     );
     final data = response.data as Map<String, dynamic>;
     final items = (data['data'] as List<dynamic>?)
-            ?.map((e) => ItemModel.fromJson(e as Map<String, dynamic>))
+            ?.whereType<Map<String, dynamic>>()
+            .map((e) {
+              try { return ItemModel.fromJson(e); } catch (_) { return null; }
+            })
+            .whereType<ItemModel>()
             .toList() ??
         [];
     final pagination = PaginationModel<ItemModel>(

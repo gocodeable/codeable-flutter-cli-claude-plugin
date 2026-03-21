@@ -86,13 +86,15 @@ class AppApiException implements Exception {
 }
 ```
 
-**Error extraction helper:**
-```dart
-String extractApiErrorMessage(Object e, String fallback) =>
-    e is AppApiException ? e.message : fallback;
-```
+**ApiService._handleDioError** handles ALL error types centrally:
+- **Server errors** (response exists): Extracts message from `response.data['error']['message']`, falls back to HTTP status code messages
+- **Network errors** (no response): Maps `DioExceptionType` to user-friendly messages:
+  - `connectionTimeout`/`sendTimeout`/`receiveTimeout` → "Connection timed out. Please try again."
+  - `connectionError` → "No internet connection. Please check your network and try again."
+  - `cancel` → "Request was cancelled."
+  - default → "Something went wrong. Please try again."
 
-**In repositories, ONLY catch `AppApiException`:**
+**In repositories, ONLY catch `AppApiException` — no generic catch:**
 ```dart
 try {
   final response = await _apiService.get(Endpoints.someEndpoint);
@@ -101,6 +103,8 @@ try {
   return RepositoryResponse(isSuccess: false, message: e.message);
 }
 ```
+
+**Cubits NEVER have try-catch.** Error handling belongs in the repository layer only.
 
 ## Auth Interceptor Flow
 

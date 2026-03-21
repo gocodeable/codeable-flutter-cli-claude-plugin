@@ -63,7 +63,16 @@ class OrdersResponseModel extends BaseApiResponse<OrdersData> {
 - Ints: `(json['key'] as num?)?.toInt() ?? 0`
 - Doubles: `(json['key'] as num?)?.toDouble() ?? 0`
 - Bools: `json['key'] as bool? ?? false`
-- Lists of objects: `(json['key'] as List<dynamic>?)?.map((e) => Model.fromJson(e as Map<String, dynamic>)).toList() ?? []`
+- Lists of objects (safe — skips malformed items):
+  ```dart
+  (json['key'] as List<dynamic>?)
+      ?.whereType<Map<String, dynamic>>()
+      .map((e) {
+        try { return Model.fromJson(e); } catch (_) { return null; }
+      })
+      .whereType<Model>()
+      .toList() ?? []
+  ```
 - Nested objects: null-check then `Model.fromJson(json['key'] as Map<String, dynamic>)`
 
 **Request model** (POST/PUT/PATCH with 4+ fields): plain class with `toJson()`, no Equatable.
