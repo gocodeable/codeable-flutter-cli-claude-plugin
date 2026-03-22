@@ -73,7 +73,7 @@ If a feature is growing too large (cubit has 30+ methods, state has 20+ fields),
 3. **Each file should have only ONE widget class** (one `build` method per file). Extract child widgets into separate files in the widgets folder. No private `_build` methods — if a section of UI is complex enough to be a method, extract it into its own widget file in `presentation/widgets/`.
 4. **Screens go in `views/`**, reusable parts go in `widgets/`.
 5. **ApiService is a singleton** — instantiate directly in repo impl as `final ApiService _apiService = ApiService();`. NEVER inject via constructor.
-6. **Repository responses** are wrapped in `RepositoryResponse<T>`.
+6. **Repository responses** are wrapped in `RepositoryResponse<T>`. All repository methods use `execute()` for centralized error handling — no manual try-catch.
 7. **API responses** are parsed via `ResponseModel.fromApiResponse()`.
 8. **All async data in state** uses `DataState<T>` — never raw types.
 9. **Business logic in cubit, not UI** — Time calculations, event payload construction, refresh orchestration, data grouping/filtering belong in cubit methods. UI only calls cubit methods and renders state.

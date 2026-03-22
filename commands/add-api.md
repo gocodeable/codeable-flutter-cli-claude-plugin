@@ -92,26 +92,35 @@ Add implementation in `data/repositories/`. ApiService is a singleton:
 final ApiService _apiService = ApiService(); // Already declared in class
 ```
 
+All repository methods use the `execute()` pattern for centralized error handling (no manual try-catch):
+
 **GET pattern:**
 ```dart
 @override
-Future<RepositoryResponse<OrdersData>> fetchOrders() async {
-  try {
+Future<RepositoryResponse<OrdersData>> fetchOrders() {
+  return execute(() async {
     final response = await _apiService.get(Endpoints.customerOrders);
     final result = ResponseModel.fromApiResponse(response, OrdersResponseModel.fromJson);
-    if (result.isSuccess) {
-      return RepositoryResponse(isSuccess: true, data: result.response?.data);
+    if (!result.isSuccess || result.response?.data == null) {
+      throw AppApiException(result.error ?? 'Failed to fetch orders');
     }
-    return RepositoryResponse(isSuccess: false, message: result.error ?? 'Failed to fetch orders');
-  } on AppApiException catch (e) {
-    return RepositoryResponse(isSuccess: false, message: e.message);
-  }
+    return result.response!.data!;
+  });
 }
 ```
 
-**POST pattern**: Use `_apiService.post(endpoint: ..., data: ...)`.
-**Multipart pattern**: Use `_apiService.postMultipart(...)` or `_apiService.putMultipart(...)`.
-**DELETE pattern**: Use `_apiService.delete(...)`, return `RepositoryResponse<void>`.
+**POST pattern:**
+```dart
+@override
+Future<RepositoryResponse<void>> createOrder(OrderRequest request) {
+  return execute(() async {
+    await _apiService.post(endpoint: Endpoints.customerOrders, data: request.toJson());
+  });
+}
+```
+
+**Multipart pattern**: Use `_apiService.postMultipart(...)` or `_apiService.putMultipart(...)` inside `execute()`.
+**DELETE pattern**: Use `_apiService.delete(...)` inside `execute()`, return `RepositoryResponse<void>`.
 
 ## Step 6: Update State
 
@@ -149,7 +158,7 @@ Future<void> fetchOrders() async {
 ## Rules
 
 - ONE cubit and ONE state per feature — add to existing, never create new.
-- Only catch `AppApiException` in repository impls.
+- Use `execute()` in all repository methods — no manual try-catch.
 - Use `const` constructors on data classes and states.
 - All data classes extend `Equatable` with proper `props`.
 - Response models extend `BaseApiResponse<DataClass>`.

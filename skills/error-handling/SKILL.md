@@ -45,24 +45,59 @@ When `e.response` is null (no server response), errors are mapped by `DioExcepti
 
 When `e.response` exists (server responded), backend error messages pass through as-is.
 
-## Repository Error Handling
+## Repository Error Handling — `execute()` Pattern
 
-**ONLY catch `AppApiException`** — no generic `catch (e)`:
+All repository methods use `execute()` for centralized error handling. The `execute()` function is defined in `repository_response.dart` alongside `RepositoryResponse`.
+
+**How `execute()` works:**
+- The callback returns `T` directly, not `RepositoryResponse<T>`
+- `execute()` wraps the result in `RepositoryResponse(isSuccess: true, data: result)`
+- Catches `AppApiException` → returns `RepositoryResponse(isSuccess: false, message: e.message)`
+- Catches unexpected errors → logs with `AppLogger.error()` + stack trace, returns `RepositoryResponse(isSuccess: false, message: "Something went wrong")`
+- **No manual try-catch in repository methods**
+
+**Void operation:**
 ```dart
-try {
-  final response = await _apiService.get(Endpoints.data);
-  final result = ResponseModel.fromApiResponse(response, DataResponseModel.fromJson);
-  if (result.isSuccess) {
-    return RepositoryResponse(isSuccess: true, data: result.response?.data);
-  }
-  return RepositoryResponse(isSuccess: false, message: result.error ?? 'Failed to fetch data');
-} on AppApiException catch (e, s) {
-  AppLogger.error('Failed to fetch data', e, s);
-  return RepositoryResponse(isSuccess: false, message: e.message);
+@override
+Future<RepositoryResponse<void>> updateProfile(ProfileRequest request) {
+  return execute(() async {
+    await _apiService.put(Endpoints.profileUpdate, request.toJson());
+  });
 }
 ```
 
-**WHY no generic catch?** ApiService._handleRequest() already catches ALL exceptions (DioException + generic) and wraps them into AppApiException. The repository never sees raw exceptions.
+**Data operation:**
+```dart
+@override
+Future<RepositoryResponse<ProfileModel>> getProfile() {
+  return execute(() async {
+    final response = await _apiService.get(Endpoints.profile);
+    final data = response.data['data'] as Map<String, dynamic>;
+    return ProfileModel.fromJson(data);
+  });
+}
+```
+
+**Business logic failure** (throw `AppApiException` inside the callback):
+```dart
+@override
+Future<RepositoryResponse<ProfileModel>> getProfile() {
+  return execute(() async {
+    final response = await _apiService.get(Endpoints.profile);
+    final parsedResponse = ProfileResponseModel.parseResponse(response);
+    final data = parsedResponse.response?.data;
+    if (!parsedResponse.isSuccess || data == null) {
+      throw AppApiException(parsedResponse.error ?? 'Failed to get profile');
+    }
+    return data;
+  });
+}
+```
+
+**WHY `execute()`?**
+- Eliminates repetitive try-catch boilerplate in every repository method
+- Centralizes error handling logic in one place
+- ApiService already catches ALL exceptions (DioException + generic) and wraps them into `AppApiException`, so the repository only needs to handle `AppApiException` and unexpected errors — both handled by `execute()`
 
 ## Cubit Error Handling
 
@@ -121,8 +156,8 @@ BlocConsumer<Cubit, State>(
 
 - **No success logs** — Don't add `AppLogger.info('X fetched successfully')` after every API call. Only use `AppLogger.error()` for failures.
 - Use `ToastHelper` for user-facing success feedback, not logger calls.
-- `AppLogger.error()` is appropriate in repository catch blocks or global error handlers.
-- **Always include stack trace** in repository catch blocks: `on AppApiException catch (e, s)` then `AppLogger.error('descriptive message', e, s)`.
+- **Error logging is centralized** — `execute()` handles logging for unexpected errors, and ApiService uses `AppLogger.error()` for network/Dio errors. Repository methods do not need manual `AppLogger.error()` calls.
+- `AppLogger.error()` is appropriate in global error handlers or truly exceptional situations outside the normal `execute()` flow.
 
 ### EmptyStateWidget (for empty results, not errors)
 ```dart

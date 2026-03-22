@@ -101,39 +101,41 @@ abstract class FeatureRepository {
 }
 ```
 
-Implementation:
+Implementation (using `execute()` for centralized error handling):
 ```dart
 class FeatureRepositoryImpl implements FeatureRepository {
   final ApiService _apiService = ApiService(); // Singleton, NOT injected
 
   @override
-  Future<RepositoryResponse<DataType>> fetchData() async {
-    try {
+  Future<RepositoryResponse<DataType>> fetchData() {
+    return execute(() async {
       final response = await _apiService.get(Endpoints.featureData);
       final result = ResponseModel.fromApiResponse(
         response,
         DataResponseModel.fromJson,
       );
-      if (result.isSuccess) {
-        return RepositoryResponse(isSuccess: true, data: result.response?.data);
+      if (!result.isSuccess || result.response?.data == null) {
+        throw AppApiException(result.error ?? 'Failed to fetch data');
       }
-      return RepositoryResponse(
-        isSuccess: false,
-        message: result.error ?? 'Failed to fetch data',
-      );
-    } on AppApiException catch (e, s) {
-      AppLogger.error('Failed to fetch data', e, s);
-      return RepositoryResponse(isSuccess: false, message: e.message);
-    }
+      return result.response!.data!;
+    });
+  }
+
+  @override
+  Future<RepositoryResponse<void>> deleteItem({required String id}) {
+    return execute(() async {
+      await _apiService.delete(Endpoints.featureItem(id));
+    });
   }
 }
 ```
 
 Rules:
 - ApiService is a singleton — `final ApiService _apiService = ApiService();`
-- Only catch `AppApiException` — never bare `Exception`
+- Use `execute()` in all repository methods — no manual try-catch
 - Return `RepositoryResponse<T>` always
-- Parse with `ResponseModel.fromApiResponse(response, Model.fromJson)`
+- Throw `AppApiException` for business-level failures inside the callback
+- `execute()` handles `AppApiException` and unexpected errors centrally
 
 ## UI Patterns
 

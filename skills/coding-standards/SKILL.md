@@ -135,18 +135,25 @@ Never use raw Flutter widgets when project-level alternatives exist:
 
 Check `utils/widgets/core_widgets/` for the project's actual widget names.
 
-## Repository Error Logging
+## Repository Error Handling
 
-Always include stack trace in repository catch blocks:
+All repository methods use `execute()` for centralized error handling — no manual try-catch:
 
 ```dart
-} on AppApiException catch (e, s) {
-  AppLogger.error('Failed to get items', e, s);
-  return RepositoryResponse(isSuccess: false, message: e.message);
+@override
+Future<RepositoryResponse<List<ItemModel>>> getItems() {
+  return execute(() async {
+    final response = await _apiService.get(Endpoints.items);
+    final data = response.data['data'] as List<dynamic>;
+    return data.map((e) => ItemModel.fromJson(e as Map<String, dynamic>)).toList();
+  });
 }
 ```
 
-Use descriptive messages that identify what operation failed.
+- `execute()` is defined in `repository_response.dart` alongside `RepositoryResponse`
+- Catches `AppApiException` (returns error message) and unexpected errors (logs with `AppLogger.error` + stack trace, returns "Something went wrong")
+- Throw `AppApiException` inside the callback for business-level failures
+- No manual `AppLogger.error()` calls needed in repositories — `execute()` handles logging
 
 ## Hive Models
 
@@ -251,7 +258,7 @@ When writing or reviewing code, verify:
 - [ ] `listenWhen` clauses narrow and focused (not 5+ variables)
 - [ ] Independent async calls use `Future.wait`
 - [ ] Custom UI components used (not raw Flutter dialogs/buttons)
-- [ ] Repository catch blocks include stack trace: `catch (e, s)`
+- [ ] Repository methods use `execute()` — no manual try-catch
 - [ ] Hive models use code generation (no manual adapters)
 - [ ] One model per file — no multi-model files
 - [ ] `PaginationModel<T>` for paginated state

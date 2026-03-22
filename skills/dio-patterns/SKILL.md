@@ -94,15 +94,21 @@ class AppApiException implements Exception {
   - `cancel` → "Request was cancelled."
   - default → "Something went wrong. Please try again."
 
-**In repositories, ONLY catch `AppApiException` — no generic catch:**
+**Error logging in ApiService** uses `AppLogger.error()` (not `debugPrint`). All network-level error logging is centralized in ApiService, so repositories do not need to log errors.
+
+**In repositories, use `execute()` for centralized error handling — no manual try-catch:**
 ```dart
-try {
-  final response = await _apiService.get(Endpoints.someEndpoint);
-  // ... handle response
-} on AppApiException catch (e) {
-  return RepositoryResponse(isSuccess: false, message: e.message);
+@override
+Future<RepositoryResponse<SomeData>> fetchData() {
+  return execute(() async {
+    final response = await _apiService.get(Endpoints.someEndpoint);
+    final data = response.data['data'] as Map<String, dynamic>;
+    return SomeData.fromJson(data);
+  });
 }
 ```
+
+`execute()` catches `AppApiException` (returns error message) and unexpected errors (logs + returns "Something went wrong").
 
 **Cubits NEVER have try-catch.** Error handling belongs in the repository layer only.
 
