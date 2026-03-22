@@ -121,7 +121,8 @@ class FeatureRepositoryImpl implements FeatureRepository {
         isSuccess: false,
         message: result.error ?? 'Failed to fetch data',
       );
-    } on AppApiException catch (e) {
+    } on AppApiException catch (e, s) {
+      AppLogger.error('Failed to fetch data', e, s);
       return RepositoryResponse(isSuccess: false, message: e.message);
     }
   }
@@ -135,6 +136,40 @@ Rules:
 - Parse with `ResponseModel.fromApiResponse(response, Model.fromJson)`
 
 ## UI Patterns
+
+### Precision Rebuilds
+
+- **Always use `buildWhen`** on `BlocBuilder` to limit rebuilds to only the state fields that matter
+- **Always use `listenWhen`** on `BlocListener` to limit side effects to relevant state changes
+- **Extract listener logic** into named methods when the body is complex
+- **Cache cubit references** in local variables when using multiple cubits in a method
+
+```dart
+Future<void> _initialize() async {
+  final homeCubit = context.read<HomeCubit>();
+  final ordersCubit = context.read<OrdersCubit>();
+  await Future.wait([
+    homeCubit.fetchData(),
+    ordersCubit.fetchOrders(),
+  ]);
+}
+```
+
+### Parallelization
+
+Use `Future.wait` for independent async calls — never await them sequentially:
+
+```dart
+// CORRECT
+await Future.wait([
+  cubitA.fetchData(),
+  cubitB.fetchData(),
+]);
+
+// WRONG
+await cubitA.fetchData();
+await cubitB.fetchData();
+```
 
 **BlocBuilder** — for rendering based on state:
 ```dart

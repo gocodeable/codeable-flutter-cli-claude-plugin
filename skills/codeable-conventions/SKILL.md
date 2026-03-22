@@ -108,6 +108,19 @@ Note: Widget names may use a project-specific prefix (e.g., `Muebly`, `Custom`).
 3. **Adding an API endpoint**: Add endpoint constant, create models, update repository interface + impl, add state field, add cubit method.
 4. **Extracting widgets**: Move sections from screen's build method into separate files in `widgets/`.
 
+## Dead Code & Analyzer Rules
+
+1. **Delete unused code** — Remove unused imports, variables, methods, classes, widgets, models, and files. No dead code in the codebase.
+2. **No commented-out code** — If code is removed, delete it entirely. Git history preserves it if needed. No commented-out files either.
+3. **Resolve all analyzer hints** — Do not suppress with `// ignore:` unless absolutely necessary. Fix the underlying issue. Run `dart analyze` and ensure zero issues.
+4. **No `setState()`** — Use Cubit state management exclusively. Use `ValueNotifier` + `ValueListenableBuilder` for local reactive UI when cubit state is overkill.
+5. **No manual Hive adapters** — Always use code generation (`@HiveType`/`@HiveField` or `@GenerateAdapters` for Hive CE) with `build_runner`.
+
+## Git Commits
+
+- **No `Co-Authored-By: Claude` or any AI co-author lines** in commit messages
+- Use conventional commit prefixes: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `style:`
+
 ## Code Quality Rules
 
 1. **Extract widgets into separate files** — No private `_build` methods. If a section of UI is complex enough to be a method, extract it into its own widget file in `presentation/widgets/`. One public widget class per file.

@@ -56,7 +56,8 @@ try {
     return RepositoryResponse(isSuccess: true, data: result.response?.data);
   }
   return RepositoryResponse(isSuccess: false, message: result.error ?? 'Failed to fetch data');
-} on AppApiException catch (e) {
+} on AppApiException catch (e, s) {
+  AppLogger.error('Failed to fetch data', e, s);
   return RepositoryResponse(isSuccess: false, message: e.message);
 }
 ```
@@ -121,6 +122,7 @@ BlocConsumer<Cubit, State>(
 - **No success logs** — Don't add `AppLogger.info('X fetched successfully')` after every API call. Only use `AppLogger.error()` for failures.
 - Use `ToastHelper` for user-facing success feedback, not logger calls.
 - `AppLogger.error()` is appropriate in repository catch blocks or global error handlers.
+- **Always include stack trace** in repository catch blocks: `on AppApiException catch (e, s)` then `AppLogger.error('descriptive message', e, s)`.
 
 ### EmptyStateWidget (for empty results, not errors)
 ```dart

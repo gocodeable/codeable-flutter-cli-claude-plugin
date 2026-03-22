@@ -56,6 +56,16 @@ feature_name/
     └── widgets/                 # Feature-specific extracted widgets
 ```
 
+## Feature Extraction Criteria
+
+A concern gets its own feature folder when:
+- It has its own cubit/state (e.g., active orders, events, notifications)
+- It has its own repository and API endpoints
+- It has its own screens/views
+- It would bloat the parent feature's cubit with unrelated state
+
+If a feature is growing too large (cubit has 30+ methods, state has 20+ fields), evaluate which concerns can be extracted into separate features.
+
 ## Critical Rules
 
 1. **ONE cubit and ONE state file per feature.** Never create extra cubit/state files. Add new fields to the existing state and new methods to the existing cubit.
