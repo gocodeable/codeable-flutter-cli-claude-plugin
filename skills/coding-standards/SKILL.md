@@ -58,6 +58,18 @@ Never use `setState()` — use Cubit state management exclusively. If you need r
 
 Never write private `_buildXyz()` methods in views. If a section of UI is complex enough to be a method, extract it into its own `StatelessWidget` file in `presentation/widgets/`.
 
+### No Private Widgets in View Files
+
+Do not define private widget classes (`_MyWidget`) in view files. Extract them into their own `StatelessWidget` files in `presentation/widgets/`.
+
+### No Business Logic in Views
+
+Views call cubit methods — they do not contain API calls, link generation, data processing, or service interactions. All business logic belongs in the cubit.
+
+### View File Size Limit
+
+If your view file exceeds ~1000 lines, you are not extracting enough widgets. Refactor immediately.
+
 ### Cache Cubit References
 
 When using multiple cubits in a method, cache them in local variables:
@@ -98,6 +110,7 @@ await cubitC.fetchData();
 - **Always use `buildWhen`** on `BlocBuilder` to limit rebuilds to only the state fields that matter
 - **Always use `listenWhen`** on `BlocListener` to limit side effects to relevant state changes
 - **Extract listener logic** into named methods when the listener body is complex
+- **If your `listenWhen` checks 5+ variables, split the listener** — use `MultiBlocListener` or multiple `BlocListener` widgets with narrow, focused `listenWhen` clauses
 
 ```dart
 BlocListener<MyCubit, MyState>(
@@ -141,7 +154,17 @@ Use descriptive messages that identify what operation failed.
 - **No manual Hive adapters** — always use generated `.g.dart` files via `build_runner`
 - Run `dart run build_runner build` after adding/modifying Hive-annotated models
 
-## Model Resilience
+## Models
+
+### One Model Per File
+
+Never put multiple model classes in a single file. Each model gets its own `.dart` file in its own folder. Creating files is free — untangling models from shared files is not.
+
+### Pagination
+
+For paginated features, **always use `PaginationModel<T>`** — never define separate `currentPage`, `totalPages`, `hasMore`, and `List<T> items` fields in state.
+
+### Model Resilience
 
 - `fromJson` factories must handle null/missing fields gracefully
 - Use `as Type? ?? defaultValue` for safe casting
@@ -188,6 +211,30 @@ final hasPermission = await PermissionManager.requestLocationPermission(
 );
 ```
 
+## Enums & Extensions
+
+- Create enums for any finite set of values (statuses, types, roles)
+- Create **enum extensions** for display names, colors, and icons rather than scattering switch statements across the codebase
+- Enum files go in `data/models/` or `core/` if shared
+
+## Naming Conventions
+
+- **No spelling mistakes** in class names, variable names, file names, or widget names
+- Widget folders organized by concern using subfolders, not flat dumps of 20 files
+- All names should be descriptive and self-documenting
+
+## Reusability
+
+- Reusability is the top priority when writing widgets and utilities
+- Before creating a new widget, check if a similar one already exists
+- Common UI patterns should be abstracted into shared widgets in `utils/widgets/`
+
+## AI-Generated Code
+
+- **Do not blindly accept AI-generated code** — review every file it modifies
+- If the AI generates `setState`, raw `AlertDialog`, generic `catch (e)`, or manual Hive adapters, fix it before committing
+- AI tools don't know project conventions unless told — enforcement is your responsibility
+
 ## Quick Reference Checklist
 
 When writing or reviewing code, verify:
@@ -197,11 +244,21 @@ When writing or reviewing code, verify:
 - [ ] No useless comments or section separators
 - [ ] No `setState()` — cubit state only
 - [ ] No `_build` methods — widgets extracted to separate files
+- [ ] No private widgets in view files
+- [ ] No business logic in views — delegate to cubit
+- [ ] View files under ~1000 lines
 - [ ] `buildWhen` / `listenWhen` on all `BlocBuilder` / `BlocListener`
+- [ ] `listenWhen` clauses narrow and focused (not 5+ variables)
 - [ ] Independent async calls use `Future.wait`
 - [ ] Custom UI components used (not raw Flutter dialogs/buttons)
 - [ ] Repository catch blocks include stack trace: `catch (e, s)`
 - [ ] Hive models use code generation (no manual adapters)
+- [ ] One model per file — no multi-model files
+- [ ] `PaginationModel<T>` for paginated state
 - [ ] Models parse resiliently with null safety
+- [ ] Enums with extensions for display names, colors, icons
+- [ ] No spelling mistakes in names
+- [ ] Widget folders organized by concern (subfolders)
+- [ ] AI-generated code reviewed before committing
 - [ ] No `Co-Authored-By` in commit messages
 - [ ] `dart analyze` passes with zero issues
