@@ -107,3 +107,21 @@ Note: Widget names may use a project-specific prefix (e.g., `Muebly`, `Custom`).
 2. **Adding a new feature**: Create full `data/domain/presentation` structure. ONE cubit, ONE state. Register cubit in `app_page.dart`. Register repository in DI.
 3. **Adding an API endpoint**: Add endpoint constant, create models, update repository interface + impl, add state field, add cubit method.
 4. **Extracting widgets**: Move sections from screen's build method into separate files in `widgets/`.
+
+## Code Quality Rules
+
+1. **Extract widgets into separate files** — No private `_build` methods. If a section of UI is complex enough to be a method, extract it into its own widget file in `presentation/widgets/`. One public widget class per file.
+
+2. **No useless comments** — Don't add comments that restate what the code does. No `/// Widget that shows...`, no `// Title`, `// Buttons`, `// Description` labels, no `// ===== Section =====` separators. Only comment genuinely non-obvious logic.
+
+3. **StatelessWidget by default** — Only use StatefulWidget when you have actual mutable state (TextEditingControllers, ScrollControllers, AnimationControllers, etc.). BlocBuilder/BlocListener do NOT require StatefulWidget.
+
+4. **Business logic in cubit, not UI** — Time calculations, event payload construction, refresh orchestration, data grouping/filtering belong in cubit methods. UI only calls cubit methods and renders state.
+
+5. **Pure utilities in helpers, not repositories** — Date math, formatting, validation utilities should be static methods in helper classes (e.g., `CalendarHelper`, `DateTimeHelper`), not repository methods. Repositories are strictly for data access (API calls, cache reads).
+
+6. **Don't redundantly disable buttons** — `RMBButton` already handles disabled state when `isLoading: true` is set (internally does `(isLoading || disabled) ? null : onPressed`). Don't also set `onPressed: isLoading ? null : handler` — it's redundant.
+
+7. **No success logs** — Don't add `AppLogger.info('X fetched successfully')` after every API call. Only use `AppLogger.error()` for failures. Use `ToastHelper` for user-facing success feedback.
+
+8. **Consolidate refresh patterns** — When multiple API calls need to happen after a mutation (create/delete/update), create a single cubit method like `refreshData()` that runs them in parallel with `Future.wait`, rather than calling 3+ methods inline in UI listeners.

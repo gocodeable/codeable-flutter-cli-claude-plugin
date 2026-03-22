@@ -116,8 +116,10 @@ class {Prefix}Screen extends StatelessWidget {
 
 Note: Check the project's actual appBar widget name by reading `utils/widgets/core_widgets/export.dart`.
 
+Always use StatelessWidget for screens — only use StatefulWidget when you have actual mutable state (TextEditingControllers, AnimationControllers). BlocBuilder/BlocListener do NOT require StatefulWidget.
+
 ### 3f: Create empty `presentation/widgets/` directory
-Create a `.gitkeep` or note that widgets will be extracted here.
+Create a `.gitkeep` or note that widgets will be extracted here. All complex UI sections must be extracted into separate widget files here — never use private `_build` helper methods in screens. One public widget class per file.
 
 ## Step 4: Wire Cubit into MultiBlocProvider
 
@@ -168,3 +170,4 @@ export 'package:{pkg}/features/{path}/presentation/views/{prefix}_screen.dart';
 - ApiService is a singleton — never inject via constructor.
 - Use `const` constructors everywhere possible.
 - Match the import style of existing files.
+- Business logic belongs in the cubit, not the UI — time calculations, event payloads, refresh orchestration go in cubit methods. Screens only call cubit methods.

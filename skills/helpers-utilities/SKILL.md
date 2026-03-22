@@ -24,13 +24,17 @@ ToastHelper.showCustomToast('Custom message');
 ```dart
 import 'package:{pkg}/utils/helpers/logger_helper.dart';
 
-AppLogger.info('User logged in');
 AppLogger.error('API failed', exception, stackTrace);
 AppLogger.debug('Debug info');
 AppLogger.warning('Warning message');
 AppLogger.verbose('Verbose details');
 ```
 - Only logs in debug mode
+- **No success logs** — Don't add `AppLogger.info('X fetched successfully')` after every API call. Only use `AppLogger.error()` for failures. Use `ToastHelper` for user-facing success feedback.
+
+## Pure Utilities in Helpers, Not Repositories
+
+Date math, formatting, validation utilities should be static methods in helper classes (e.g., `CalendarHelper`, `DateTimeHelper`), not repository methods. Repositories are strictly for data access (API calls, cache reads). If you need a utility function, add it to an existing helper class or create a new one in `utils/helpers/`.
 
 ## DateTimeHelper
 

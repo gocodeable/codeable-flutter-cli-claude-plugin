@@ -119,8 +119,7 @@ class _{Prefix}{Form}ScreenState extends State<{Prefix}{Form}Screen> {
                   CustomButton(
                     text: context.l10n.submit,
                     isLoading: state.submitData.isLoading,
-                    disabled: state.submitData.isLoading,
-                    onPressed: state.submitData.isLoading ? null : _onSubmit,
+                    onPressed: _onSubmit,
                   ),
                 ],
               ),
@@ -156,3 +155,5 @@ Run `dart analyze lib/` and fix any issues.
 - Dispose all controllers in `dispose()`.
 - Use `Form` with `GlobalKey<FormState>` for validation.
 - Trim text inputs before submitting.
+- Don't redundantly disable buttons — `RMBButton`/`CustomButton` already handles disabled state when `isLoading: true`. Don't also set `disabled: isLoading` or `onPressed: isLoading ? null : handler`.
+- No useless comments — don't add `/// Widget that shows...`, `// Title`, or section separators. Only comment non-obvious logic.

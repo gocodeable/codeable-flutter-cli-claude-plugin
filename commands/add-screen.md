@@ -49,6 +49,9 @@ class {Prefix}{ScreenName}Screen extends StatelessWidget {
 }
 ```
 
+Note: Always use StatelessWidget for screens unless you have actual mutable state (TextEditingControllers, AnimationControllers). BlocBuilder/BlocListener do NOT require StatefulWidget.
+```
+
 If the screen needs a route parameter (like an ID), add it:
 ```dart
 class {Prefix}{ScreenName}Screen extends StatelessWidget {
@@ -82,3 +85,5 @@ static const String {prefix}{ScreenName}Screen = '/{role}-{feature}-{screen}';
 - Match the appBar widget used by the project (check existing screens).
 - Follow the exact file naming convention of existing screens.
 - If the screen needs data, add state fields and cubit methods to the EXISTING cubit/state.
+- No useless comments — don't add `/// Widget that shows...`, `// Title`, or section separators. Only comment non-obvious logic.
+- Business logic belongs in the cubit, not the UI — time calculations, event payloads, refresh orchestration go in cubit methods. The screen only calls cubit methods.

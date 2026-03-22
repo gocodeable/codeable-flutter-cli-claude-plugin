@@ -66,9 +66,10 @@ Run `dart analyze lib/` and fix any issues.
 - Provide sensible defaults for optional props
 - Use `AppColors` and `context.xxx` text styles — don't hardcode values
 - Support `disabled` state where applicable
-- One widget class per file
+- One public widget class per file — no private `_build` helper methods; extract sub-sections into their own widget files in `presentation/widgets/`
 - Keep the widget focused on one responsibility
-- Document unusual props with inline comments only if needed
+- Use StatelessWidget by default — only use StatefulWidget when you have actual mutable state (TextEditingControllers, AnimationControllers, etc.). BlocBuilder/BlocListener do NOT require StatefulWidget
+- No useless comments — don't add comments that restate what the code does (no `/// Widget that shows...`, no `// Title`, no section separators). Only comment non-obvious logic
 
 ## Common Widget Patterns
 

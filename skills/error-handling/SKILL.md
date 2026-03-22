@@ -116,6 +116,12 @@ BlocConsumer<Cubit, State>(
 )
 ```
 
+### Logging Rules
+
+- **No success logs** — Don't add `AppLogger.info('X fetched successfully')` after every API call. Only use `AppLogger.error()` for failures.
+- Use `ToastHelper` for user-facing success feedback, not logger calls.
+- `AppLogger.error()` is appropriate in repository catch blocks or global error handlers.
+
 ### EmptyStateWidget (for empty results, not errors)
 ```dart
 if (state.data.isLoaded && state.data.isEmpty) {

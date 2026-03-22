@@ -87,6 +87,9 @@ Rules:
 - Check `result.isSuccess && result.data != null` for success
 - Use `result.message` for failure error text
 - For void operations (DELETE), check `result.isSuccess` only
+- **Business logic belongs in the cubit** — time calculations, event payload construction, data grouping/filtering, and refresh orchestration are cubit responsibilities. UI only calls cubit methods and renders state.
+- **No success logs** — Don't add `AppLogger.info('X fetched successfully')` after API calls. Only use `AppLogger.error()` for failures. Use `ToastHelper` for user-facing success feedback.
+- **Consolidate refresh patterns** — When multiple API calls need to happen after a mutation (create/delete/update), create a single cubit method like `refreshData()` that runs them in parallel with `Future.wait`, rather than calling 3+ methods inline in UI listeners.
 
 ## Repository Pattern
 
@@ -168,15 +171,17 @@ BlocConsumer<FeatureCubit, FeatureState>(
 - `context.read<Cubit>()` — one-time reads (in callbacks, initState)
 - `context.watch<Cubit>()` — reactive rebuilds (in build methods)
 
+**StatelessWidget by default** — Only use StatefulWidget when you have actual mutable state (TextEditingControllers, ScrollControllers, AnimationControllers, etc.). BlocBuilder/BlocListener do NOT require StatefulWidget.
+
 **Button loading state**:
 ```dart
 MueblyButton(
   text: context.l10n.submit,
   isLoading: state.submitData.isLoading,
-  disabled: state.submitData.isLoading,
-  onPressed: state.submitData.isLoading ? null : () => cubit.submit(),
+  onPressed: () => cubit.submit(),
 )
 ```
+Don't redundantly disable buttons — `MueblyButton` (and `RMBButton`) already handles disabled state when `isLoading: true` is set (internally does `(isLoading || disabled) ? null : onPressed`). Don't also set `disabled: state.submitData.isLoading` or `onPressed: isLoading ? null : handler` — it's redundant.
 
 ## Model Patterns
 

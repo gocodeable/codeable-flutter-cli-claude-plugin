@@ -98,3 +98,6 @@ Run `dart analyze lib/` and fix any issues.
 - All async data uses `DataState<T>`.
 - Default to `const DataState.initial()`.
 - Include ALL fields in `props`.
+- Business logic belongs in the cubit — time calculations, event payloads, refresh orchestration, data transformations all go here. UI only calls cubit methods.
+- No success logs — only use `AppLogger.error()` for failures. Use `ToastHelper` for user-facing feedback (handled in the UI's BlocListener).
+- Consolidate refresh patterns — when multiple data sources need refreshing together, create a single cubit method that uses `Future.wait` instead of making the UI call multiple methods sequentially.

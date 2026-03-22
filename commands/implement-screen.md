@@ -40,7 +40,7 @@ Create/update the screen file using:
 
 ## Step 4: Extract Widgets
 
-If any section is complex (>40 lines), extract to `<feature>/presentation/widgets/`.
+If any section is complex (>40 lines), extract to `<feature>/presentation/widgets/`. Never use private `_build` helper methods — always extract into a separate widget file with one public widget class per file.
 
 ## Step 5: Verify
 
@@ -52,3 +52,6 @@ Run `dart analyze --no-pub` and fix issues.
 - ALWAYS use context.l10n for strings, AppColors for colors, context.h1/b1 for styles
 - ALWAYS use EdgeInsetsDirectional (never EdgeInsets.left/right)
 - Handle all states (loading, error, empty, loaded)
+- No useless comments — don't add `/// Widget that shows...`, `// Title`, or section separators. Only comment non-obvious logic
+- Use StatelessWidget by default — only use StatefulWidget for actual mutable state (TextEditingControllers, AnimationControllers). BlocBuilder/BlocListener do NOT require StatefulWidget
+- Business logic belongs in the cubit, not the UI — time calculations, event payloads, refresh orchestration go in cubit methods. The screen only calls cubit methods

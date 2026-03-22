@@ -69,9 +69,11 @@ Run `dart analyze lib/` and fix any issues.
 
 ## Rules
 
-- ONE widget class per file.
+- ONE public widget class per file — never use private `_build` helper methods in screens. Always extract into a separate widget file.
 - Widget file goes in the feature's `presentation/widgets/` folder.
 - Follow the project's naming convention: `{prefix}_{purpose}.dart`.
 - Use `const` constructors where possible.
 - Prefer passing data via constructor over accessing cubit directly in the widget.
 - Keep the extracted widget as simple and focused as possible.
+- Use StatelessWidget by default — only use StatefulWidget when the widget has actual mutable state (TextEditingControllers, AnimationControllers, etc.). BlocBuilder/BlocListener do NOT require StatefulWidget.
+- No useless comments — don't add `/// Widget that shows...`, `// Title`, or `// ===== Section =====` separators. Only comment non-obvious logic.
