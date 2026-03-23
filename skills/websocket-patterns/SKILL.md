@@ -76,24 +76,17 @@ if (_socketService.status == SocketStatus.connected) { ... }
 
 ## Configuration
 
-Socket URL is configured **per-flavor** in `ApiEnvironment`:
+Socket URL is configured **per-flavor** via `AppEnv`, which uses envied-generated classes with per-flavor `.env` files:
 
 ```dart
-enum ApiEnvironment {
-  production(
-    baseUrl: 'https://api.example.com/api',
-    socketUrl: 'wss://api.example.com/ws',  // <-- WebSocket URL
-    ...
-  ),
-  development(
-    baseUrl: 'https://dev-api.example.com/api',
-    socketUrl: 'wss://dev-api.example.com/ws',
-    ...
-  );
-}
+// In each env/.env.{flavor} file:
+// SOCKET_URL=wss://api.example.com/ws
+
+// Access via AppEnv:
+final socketUrl = AppEnv.socketUrl;
 ```
 
-**Update `socketUrl`** for each environment before using WebSocket features.
+**Update `SOCKET_URL`** in each `env/.env.{flavor}` file before using WebSocket features.
 
 ## Auth Handshake
 
@@ -194,11 +187,11 @@ All socket events use `AppLogger` with pretty-printed output:
 
 - `web_socket_channel: ^3.0.3` (already in pubspec)
 - `AppPreferences` for auth token access
-- `ApiEnvironment` for socket URL per flavor
+- `AppEnv` for socket URL per flavor (envied-based)
 
 ## Checklist for WebSocket Integration
 
-1. Update `socketUrl` in `ApiEnvironment` for each flavor
+1. Update `SOCKET_URL` in each `env/.env.{flavor}` file
 2. Ensure backend sends JSON with `{'event': '...', 'data': ...}` format
 3. Call `socketService.connect(roomId)` after authentication
 4. Subscribe to `socketService.messages` stream in your cubit/repository

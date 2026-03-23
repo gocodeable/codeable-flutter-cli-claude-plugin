@@ -18,16 +18,17 @@ final secureStorage = FlutterSecureStorage();
 await secureStorage.write(key: 'token', value: token);
 ```
 
-## API Key Protection
+## API Key Protection (envied)
 
 - NEVER hardcode API keys in Dart code
-- Use environment variables or build configs:
-```dart
-// In build config / flavor-specific files
-const apiKey = String.fromEnvironment('API_KEY');
-```
-- Use Firebase Remote Config for dynamic keys
-- Add to `.gitignore`: `.env`, `google-services.json`, `GoogleService-Info.plist`
+- Use the `envied` package for compile-time env variable injection with XOR obfuscation
+- Per-flavor `.env` files live in a gitignored `env/` folder at project root (`env/.env.development`, `env/.env.staging`, `env/.env.production`)
+- Per-flavor env dart files in `lib/config/env/` (`env_dev.dart`, `env_stg.dart`, `env_prod.dart`) use `@Envied` annotations
+- A resolver `AppEnv` class in `lib/config/env/app_env.dart` picks the right env based on current flavor
+- Obfuscated fields (API keys, secrets) use `@EnviedField(obfuscate: true)` and must be `static final` (not `const`, since obfuscation generates runtime code)
+- Non-obfuscated fields (base URLs) use `static const`
+- Firebase Remote Config is still used for dynamic values (e.g., dev base URL override)
+- Add to `.gitignore`: `env/`, `google-services.json`, `GoogleService-Info.plist`
 
 ## Input Validation
 
@@ -109,11 +110,34 @@ The `LoggingInterceptor` only logs in debug mode (`kDebugMode`). In release:
 - Clear all auth data on refresh failure
 - Automatic redirect to login on auth failure
 
-## ProGuard/R8 (Release Builds)
+## Build Obfuscation & ProGuard/R8 (Release Builds)
 
-Code obfuscation enabled via:
+Dart code obfuscation for release builds:
 ```bash
-flutter build apk --obfuscate --split-debug-info=./debug-info/
+flutter build apk --obfuscate --split-debug-info=build/debug-info
+flutter build appbundle --obfuscate --split-debug-info=build/debug-info
+flutter build ipa --obfuscate --split-debug-info=build/debug-info
+```
+
+Android release buildType should include:
+```groovy
+release {
+    shrinkResources true
+    minifyEnabled true
+    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+}
+```
+
+Use a **Makefile** for consistent release builds with obfuscation flags, so developers don't forget to include them:
+```makefile
+build-apk:
+	flutter build apk --flavor production -t lib/main_production.dart --obfuscate --split-debug-info=build/debug-info
+
+build-aab:
+	flutter build appbundle --flavor production -t lib/main_production.dart --obfuscate --split-debug-info=build/debug-info
+
+build-ios:
+	flutter build ipa --flavor production -t lib/main_production.dart --obfuscate --split-debug-info=build/debug-info
 ```
 
 ProGuard rules keep Flutter and plugin classes intact.

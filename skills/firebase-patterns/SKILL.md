@@ -63,15 +63,20 @@ await localNotif.sendLocalNotification(title, body, payload);
 final remoteConfig = Injector.resolve<RemoteConfigService>();
 
 // Typically used for:
-// - Dynamic base URL
+// - Dev base URL override (overrides the envied-compiled base URL in development)
 // - Feature flags
 // - App version checks
 // - Maintenance mode
 ```
 
-Access pattern:
+Remote Config integrates with `AppEnv` for dynamic overrides. The base URL from envied is the default, but in development flavor, Remote Config can override it:
 ```dart
-static String get effectiveBaseUrl => RemoteConfigService.instance.getString('base_url');
+// In AppEnv
+static String get baseUrl {
+  final remoteUrl = RemoteConfigService.instance.getString('base_url');
+  if (remoteUrl.isNotEmpty) return remoteUrl;
+  return _envBaseUrl; // from envied-generated class
+}
 ```
 
 ## Analytics (if integrated)

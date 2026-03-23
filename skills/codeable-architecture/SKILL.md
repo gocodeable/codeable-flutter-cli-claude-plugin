@@ -10,9 +10,14 @@ You are an expert in the Flutter Clean Architecture pattern used by projects gen
 ## Project Structure
 
 ```
+env/                                # Per-flavor .env files (gitignored)
+├── .env.development
+├── .env.staging
+└── .env.production
 lib/
 ├── app/view/                    # App entry: MultiBlocProvider, MaterialApp, Splash
-├── config/                      # Flavors (dev/staging/prod), API environment, Remote Config
+├── config/                      # Flavors (dev/staging/prod), Remote Config
+│   └── env/                    # AppEnv (envied-based per-flavor env config)
 ├── constants/                   # AppColors, AppTextStyle, AssetPaths, constants
 ├── core/
 │   ├── api_service/             # Dio HTTP client, auth interceptor, logging

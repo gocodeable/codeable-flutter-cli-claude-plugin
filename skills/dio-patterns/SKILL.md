@@ -138,9 +138,9 @@ return RepositoryResponse(isSuccess: false, message: result.error ?? 'Fallback e
 
 ## BaseUrl
 
-Dynamic via Remote Config:
+Resolved via `AppEnv`, which reads from envied-generated per-flavor env classes. In development, Remote Config can override the base URL:
 ```dart
-static String get baseUrl => ApiEnvironment.effectiveBaseUrl;
+static String get baseUrl => AppEnv.baseUrl;
 ```
 
 The ApiService uses `_getFullUrl(endpoint)` to prepend the base URL.
