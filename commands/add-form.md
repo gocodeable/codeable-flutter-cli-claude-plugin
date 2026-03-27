@@ -116,10 +116,16 @@ class _{Prefix}{Form}ScreenState extends State<{Prefix}{Form}Screen> {
                     labelText: context.l10n.email,
                   ),
                   const SizedBox(height: 24),
-                  CustomButton(
-                    text: context.l10n.submit,
-                    isLoading: state.submitData.isLoading,
-                    onPressed: _onSubmit,
+                  FormBuilder(
+                    controllers: [_nameController, _emailController],
+                    builder: (context, isValid) {
+                      return CustomButton(
+                        text: context.l10n.submit,
+                        isLoading: state.submitData.isLoading,
+                        onPressed: _onSubmit,
+                        disabled: !isValid,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -156,4 +162,5 @@ Run `dart analyze lib/` and fix any issues.
 - Use `Form` with `GlobalKey<FormState>` for validation.
 - Trim text inputs before submitting.
 - Don't redundantly disable buttons — `RMBButton`/`CustomButton` already handles disabled state when `isLoading: true`. Don't also set `disabled: isLoading` or `onPressed: isLoading ? null : handler`.
+- Use `FormBuilder` widget to drive button disabled state from text controllers — it's a `StatelessWidget` that uses `ListenableBuilder` + `Listenable.merge` to rebuild only the button when any controller changes. Default validation: all fields non-empty. Custom validation via `validator` callback. This is UI state, not business logic — don't put form validity in cubits.
 - No useless comments — don't add `/// Widget that shows...`, `// Title`, or section separators. Only comment non-obvious logic.
